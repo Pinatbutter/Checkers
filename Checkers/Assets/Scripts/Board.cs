@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Board : MonoBehaviour
@@ -11,10 +12,12 @@ public class Board : MonoBehaviour
     public GameObject whitePiecePrefab;
     public GameObject blackPiecePrefab;
 
-    private bool isWhite;
+    public bool isWhite;
     private bool isWhiteTurn;
 
     private Pieces selectedPiece;
+    private List<Pieces> forcedPieces;
+    private bool hasKilled;
     private Vector2 mouseOver;
     private Vector2 startDrag;
     private Vector2 endDrag;
@@ -22,26 +25,28 @@ public class Board : MonoBehaviour
     private void Start()
     {
         isWhiteTurn = true;
+        forcedPieces = new List<Pieces>();
         GeneratePieces();
     }
 
     private void Update()
     {
         UpdateMouseOver();
-        Debug.Log(mouseOver);
+
+        if ((isWhite) ? isWhiteTurn : !isWhiteTurn)
         {
+
             int x = (int)mouseOver.x;
             int y = (int)mouseOver.y;
-            if(selectedPiece != null)
-            {
+
+            if (selectedPiece != null)
                 UpdatePieceDrag(selectedPiece);
-            }
+
             if (Input.GetMouseButtonDown(0))
                 SelectPiece(x, y);
+            
             if (Input.GetMouseButtonUp(0))
-            {
                 TryMove((int)startDrag.x, (int)startDrag.y, x, y);
-            }
         }
     }
     private void UpdateMouseOver()
@@ -66,15 +71,25 @@ public class Board : MonoBehaviour
     }
     private void SelectPiece(int x, int y)
     {
-        if (x < 0 || x >= piece.Length || y < 0 || y >= piece.Length)
+        if (x < 0 || x >= 8 || y < 0 || y >= 8)
             return;
 
         Pieces p = piece[x, y];
-        if (p != null)
+        if (p != null && p.isWhite == isWhite) 
         {
-            selectedPiece = p;
-            startDrag = mouseOver;
-            Debug.Log(selectedPiece.name);
+            if(forcedPieces.Count == 0)
+            {
+                selectedPiece = p;
+                startDrag = mouseOver;
+            }
+            else
+            {
+                if (forcedPieces.Find(fp => fp == p) == null) 
+                    return;
+                selectedPiece = p;
+                startDrag = mouseOver;
+                
+            }
         }
     }
 
@@ -99,9 +114,10 @@ public class Board : MonoBehaviour
     {
         startDrag = new Vector2(x1, y1); 
         endDrag = new Vector2(x2, y2);
-        selectedPiece = piece[x1, y1]; 
+        selectedPiece = piece[x1, y1];
+        forcedPieces = ScanForPossibleMove();
 
-        if(x2 < 0 || x2 >= piece.Length || y2<0 || y2>= piece.Length)
+        if(x2 < 0 || x2 >= 8 || y2<0 || y2>= 8)
         {
             if (selectedPiece != null)
             {
@@ -124,14 +140,23 @@ public class Board : MonoBehaviour
 
             if(selectedPiece.ValidMove(piece,x1, y1, x2, y2))
             {
-                if (Mathf.Abs(x2 - x2) == 2)
+                if (Mathf.Abs(x2 - x1) == 2)
                 {
                     Pieces p = piece[(x1 + x2) / 2, (y1 + y2) / 2];
                     if (p != null)
                     {
                         piece[(x1 + x2) / 2, (y1 + y2) / 2] = null;
-                        Destroy(p);
+                        Destroy(p.gameObject);
+                        hasKilled = true;
                     }
+                }
+
+                if(forcedPieces.Count != 0 && !hasKilled)
+                {
+                    PlacePiece(selectedPiece, x1, y1);
+                    startDrag = Vector2.zero;
+                    selectedPiece = null;
+                    return;
                 }
 
                 piece[x2, y2] = selectedPiece;
@@ -154,16 +179,88 @@ public class Board : MonoBehaviour
 
     private void EndTurn()
     {
+        int x = (int)endDrag.x;
+        int y = (int)endDrag.y;
+
+        //Promotions
+        if(selectedPiece != null)
+        {
+            if(selectedPiece.isWhite && !selectedPiece.isKing && y == 7)
+            {
+                selectedPiece.isKing = true;
+                selectedPiece.transform.Rotate(Vector3.right * 180);
+            }
+            else if (!selectedPiece.isWhite && !selectedPiece.isKing && y == 0)
+            {
+                selectedPiece.isKing = true;
+                selectedPiece.transform.Rotate(Vector3.right * 180);
+            }
+        }
+
+
         selectedPiece = null;
         startDrag = Vector2.zero;
 
+        if (ScanForPossibleMove(selectedPiece, x, y).Count != 0 && hasKilled)
+            return;
+
         isWhiteTurn = !isWhiteTurn;
+        isWhite = !isWhite;
+        hasKilled = false;
         CheckVictory();
     } 
 
     private void CheckVictory()
     {
+        var ps = FindObjectsOfType<Pieces>();
+        bool hasWhite = false, hasBlack = false;
+        for(int i =0; i<ps.Length; i++)
+        {
+            if (ps[i].isWhite)
+                hasWhite = true;
+            else
+                hasBlack = true;
+        }
+        if (!hasWhite)
+            Victory(false);
+        if (!hasBlack)
+            Victory(true);
+    }
 
+    private void Victory (bool isWhite)
+    {
+        if (isWhite)
+        {
+            Debug.Log("Black Won");
+        }
+        else
+            Debug.Log("Wite Won");
+    }
+
+    private List<Pieces> ScanForPossibleMove(Pieces p, int x, int y)
+    {
+        forcedPieces = new List<Pieces>();
+
+        if (piece[x, y].IsForceToMove(piece, x, y))
+            forcedPieces.Add(piece[x, y]);
+       
+        return forcedPieces;
+
+    }
+    private List<Pieces> ScanForPossibleMove()
+    {
+        forcedPieces = new List<Pieces>();
+
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                if (piece[i, j] != null && piece[i, j].isWhite == isWhiteTurn)
+                    if (piece[i, j].IsForceToMove(piece, i, j))
+                        forcedPieces.Add(piece[i, j]);
+            }
+        }
+        return forcedPieces;
     }
 
     private void GeneratePieces()

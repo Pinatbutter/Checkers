@@ -259,6 +259,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c527c24aaf42ee94bab59b7a2c028c6a, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c527c24aaf42ee94bab59b7a2c028c6a, type: 3}
 --- !u!1 &486667874 stripped
@@ -282,6 +286,7 @@ MonoBehaviour:
   otherOffSet: {x: 0.5, y: 0, z: 0.5}
   whitePiecePrefab: {fileID: 2807752756082033030, guid: b1199c11c3b023f48a52a66d767129b0, type: 3}
   blackPiecePrefab: {fileID: 1964122311025087315, guid: 6a234b214a6565e4a8bebfb3e6a75c9b, type: 3}
+  isWhite: 0
 --- !u!65 &486667876
 BoxCollider:
   m_ObjectHideFlags: 0
