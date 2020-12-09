@@ -286,7 +286,8 @@ MonoBehaviour:
   otherOffSet: {x: 0.5, y: 0, z: 0.5}
   whitePiecePrefab: {fileID: 2807752756082033030, guid: b1199c11c3b023f48a52a66d767129b0, type: 3}
   blackPiecePrefab: {fileID: 1964122311025087315, guid: 6a234b214a6565e4a8bebfb3e6a75c9b, type: 3}
-  isWhite: 0
+  isWhite: 1
+  MinMax: {fileID: 486667874}
 --- !u!65 &486667876
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -300,6 +301,18 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 0.08, y: 0.08, z: 0.001}
   m_Center: {x: 0.0000000037252903, y: 0, z: -0.0004999997}
+--- !u!114 &486667880
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 486667874}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a1a59762e8f3054eb17e356078b7a5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
