@@ -52,6 +52,7 @@ public class AI : MonoBehaviour
         char rival = 'w';
         int rdir = 1;
 
+        // our turn
         if (turn)
         {
             rival = 'b';
@@ -59,35 +60,63 @@ public class AI : MonoBehaviour
             rdir = -1;
         }
 
+        // check every slot in the board
         for (int r = 0; r < 8; r++)
         {
             for (int c = 0; c < 8; c++)
             {
+                // check if the piece there is ours
                 if (b.board[r][c] == player || b.board[r][c] == char.ToUpper(player))
                 {
+                    //// add the movement direction of the row
                     int endR = r + rdir;
+
+                    // check if we are still inside the board
                     if (endR >= 0 && endR < 8)
-                    {   // move forwards
+                    {   
+                        // move forwards if possible (still inside board)
                         if (c + 1 < 8)
                         {
+
+                            // check the position where we could move
                             char dest = b.board[endR][c + 1];
+
+                            // check if the position is empty
                             if (dest == '_')
                             {
+                                // if its empty, move there
                                 Move m;
-                                m.startR = r; m.startC = c; m.endR = endR; m.endC = c + 1;
+                                m.startR = r;
+                                m.startC = c;
+                                m.endR = endR;
+                                m.endC = c + 1;
+
+                                // add the move to the move list
                                 allMoves.Add(m);
                             }
+
+                            // check if the opponent is in the position
                             else if (char.ToLower(dest) == rival)
-                            {   // Capture
+                            {   
+                                // capture the opponent
                                 int rcapt = endR + rdir;
+
+                                // check if we do not jump outside the board
                                 if (rcapt >= 0 && rcapt < 8)
                                 {
+                                    // check if after moving 2 steps forward we are still inside
                                     if (c + 2 < 8)
                                     {
+                                        // check if the place to jump is empty
                                         if (b.board[rcapt][c + 2] == '_')
                                         {
                                             Move m;
-                                            m.startR = r; m.startC = c; m.endR = rcapt; m.endC = c + 2;
+                                            m.startR = r;
+                                            m.startC = c;
+                                            m.endR = rcapt;
+                                            m.endC = c + 2;
+
+                                            // add the jump to the move list
                                             allMoves.Add(m);
                                         }
                                     }
@@ -122,47 +151,73 @@ public class AI : MonoBehaviour
                         }
                     }
 
+                    ///// king manouvers
                     int rendR = r - rdir;
+
+                    // check if we are a queen
                     if (b.board[r][c] == char.ToUpper(player))
                     {
-                        if (rendR >= 0 && rendR < 8) //move backwards if king
+                        // check if we remain in the board after moving backwards
+                        if (rendR >= 0 && rendR < 8)
                         {
+                            // check if we are still inside the board
                             if (c + 1 < 8)
                             {
+                                // check if the place is empty
                                 char dest = b.board[rendR][c + 1];
                                 if (dest == '_')
                                 {
                                     Move m;
-                                    m.startR = r; m.startC = c; m.endR = rendR; m.endC = c + 1;
+                                    m.startR = r;
+                                    m.startC = c;
+                                    m.endR = rendR;
+                                    m.endC = c + 1;
+                                    
                                     allMoves.Add(m);
                                 }
-                                else if (char.ToLower(dest) == rival) //capture
+                                // check if we can capture there
+                                else if (char.ToLower(dest) == rival)
                                 {
                                     int rcapt = rendR - rdir;
                                     if (rcapt >= 0 && rcapt < 8)
                                     {
                                         if (c + 2 < 8)
                                         {
+                                            // check if the jump place is empty
                                             if (b.board[rcapt][c + 2] == '_')
                                             {
                                                 Move m;
-                                                m.startR = r; m.startC = c; m.endR = rcapt; m.endC = c + 2;
+                                                m.startR = r;
+                                                m.startC = c;
+                                                m.endR = rcapt;
+                                                m.endC = c + 2;
+
                                                 allMoves.Add(m);
                                             }
                                         }
                                     }
                                 }
                             }
+
+                            // same as above, but to the opposite side
+                            // now we check if we go down we are still on the board
                             if (c - 1 >= 0)
                             {
+                                // check if place to move is empty
                                 char dest = b.board[rendR][c - 1];
                                 if (dest == '_')
                                 {
                                     Move m;
-                                    m.startR = r; m.startC = c; m.endR = rendR; m.endC = c - 1;
+                                    m.startR = r;
+                                    m.startC = c;
+                                    m.endR = rendR;
+                                    m.endC = c - 1;
+
                                     allMoves.Add(m);
                                 }
-                                else if (char.ToLower(dest) == rival) //capture
+
+                                // check if rival is there to be captured
+                                else if (char.ToLower(dest) == rival)
                                 {
                                     int rcapt = rendR - rdir;
                                     if (rcapt >= 0 && rcapt < 8)
@@ -172,7 +227,11 @@ public class AI : MonoBehaviour
                                             if (b.board[rcapt][c - 2] == '_')
                                             {
                                                 Move m;
-                                                m.startR = r; m.startC = c; m.endR = rcapt; m.endC = c - 2;
+                                                m.startR = r;
+                                                m.startC = c;
+                                                m.endR = rcapt;
+                                                m.endC = c - 2;
+
                                                 allMoves.Add(m);
                                             }
                                         }
@@ -185,39 +244,57 @@ public class AI : MonoBehaviour
             }
         }
 
+        // we need to see which of these moves
+        // were captures
         List<Move> captures = new List<Move>();
         foreach (var m in allMoves)
             if (Math.Abs(m.endR - m.startR) == 2)
                 captures.Add(m);
 
+        // If there are captures we return the captures
+        // as captures are forced
         if (captures.Count > 0)
             return captures;
+
+        // if there are no captures, we return the normal moves
         return allMoves;
     }
 
     CheckersBoard makeMove(CheckersBoard b, Move m)
     {
+        // check if it is a capture aka a jump
         bool capture = Math.Abs(m.endR - m.startR) == 2;
+
+        // move the piece
         b.board[m.endR][m.endC] = b.board[m.startR][m.startC];
         if (!b.turn)
         {
+            // coronate if at last row
             if (m.endR == 7)
                 b.board[m.endR][m.endC] = 'B';
         }
         else
         {
+            // coronate if at first row
             if (m.endR == 0)
                 b.board[m.endR][m.endC] = 'W';
         }
+
+        // mark where we where empty
         b.board[m.startR][m.startC] = '_';
 
+        
+        // if we captured we leave the place we jumped over empty
         if (capture)
         {
             b.board[(m.endR + m.startR) / 2][(m.endC + m.startC) / 2] = '_';
         }
+
+        // we return the checkerboard
         return b;
     }
 
+    // Our evaluation Function
     int staticEval(CheckersBoard b)
     {
         int score = 0;
@@ -417,19 +494,32 @@ public class AI : MonoBehaviour
         return score;
     }
 
+
+    // Alpha beta function
     MoveScore alphabetaMax(CheckersBoard b, MoveScore alpha, MoveScore beta, int depth)
     {
+        // If our depth is at 0
         if (depth == 0)
         {
+
+            // Generate the possible moves
             List<Move> moveList = generateMoves(b);
+
+            // Check if we can move and if that move was a jump
             if (moveList.Count > 0 && (moveList[0].endR - moveList[0].startR) == 2)
             {
+                // Note created new boards
+                // make a new board with the first move
                 CheckersBoard temp = makeMove(b, moveList[0]);
+                CheckersBoard newBoard = new CheckersBoard();
+                newBoard.board = new List<char[]>(temp.board);
+                newBoard.turn = temp.turn;
+
                 int last = moveList[0].endR * 10 + moveList[0].endC;
                 bool capture = true;
                 while (capture)
                 {
-                    List<Move> moremvs = generateMoves(temp);
+                    List<Move> moremvs = generateMoves(newBoard);
                     capture = false;
                     if (moremvs.Count == 0 || Math.Abs(moremvs[0].endR - moremvs[0].startR) != 2)
                         break;
@@ -437,15 +527,15 @@ public class AI : MonoBehaviour
                     {
                         if (mm.startR * 10 + mm.startC == last)
                         {
-                            temp = makeMove(temp, mm);
+                            newBoard = makeMove(newBoard, mm);
                             last = mm.endR * 10 + mm.endC;
                             capture = true;
                             break;
                         }
                     }
                 }
-                temp.turn = !temp.turn;
-                return alphabetaMin(temp, alpha, beta, 0);
+                newBoard.turn = !newBoard.turn;
+                return alphabetaMin(newBoard, alpha, beta, 0);
             }
 
             MoveScore ms;
@@ -618,17 +708,20 @@ public class AI : MonoBehaviour
         List<(int, int)> Solution = new List<(int, int)>();
 
         int nmoves = 1;
-        int depth = 75;
+        int depth = 25;
 
         Move f = legalMoves[0];
         f = evaluate(gameBoard, depth);
 
         // Add the selected move current position
         Solution.Add((f.startC, f.startR));
+
         // Add the selected move next position
         Solution.Add((f.endC, f.endR));
 
         int last = f.endR * 10 + f.endC;
+
+        UnityEngine.Debug.Log(last);
 
         bool capture = Math.Abs(f.endR - f.startR) == 2;
         while (capture)
