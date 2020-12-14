@@ -239,6 +239,7 @@ public class Board : MonoBehaviour
         isWhiteTurn = !isWhiteTurn;
         isWhite = !isWhite;
         hasKilled = false;
+        UnityEngine.Debug.Log("before checking victory");
         isGameOver = CheckVictory();
         if (isGameOver == false)
             if (!isWhiteTurn)
@@ -348,6 +349,22 @@ public class Board : MonoBehaviour
 
     private bool CheckVictory()
     {
+        string boardString = TransformBoard();
+        string victoryString = boardString.Substring(3);
+        int whiteIndex = victoryString.IndexOf('w');
+        int blackIndex = victoryString.IndexOf('b');
+
+        if (whiteIndex == -1)
+        {
+            UnityEngine.Debug.Log("Black Won");
+        }
+
+        if (blackIndex == -1)
+        {
+            UnityEngine.Debug.Log("White Won");
+        }
+
+        
         var ps = FindObjectsOfType<Pieces>();
         bool hasWhite = false;
         bool hasBlack = false;

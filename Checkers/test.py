@@ -5,8 +5,8 @@ import sys
 # Global Constants
 Infinity = 2147483647  # maximum integer value
 isBlack = True  # if the player is black
-TimeLimit = 2  # maximum allowed time
-DepthLimit = 200  # maximum depth
+TimeLimit = 1  # maximum allowed time
+DepthLimit = 100  # maximum depth
 
 
 # Checkers State Representation class:
