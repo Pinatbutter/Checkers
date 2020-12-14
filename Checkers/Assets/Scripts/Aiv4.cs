@@ -17,7 +17,7 @@ public class Aiv4 : MonoBehaviour
         cmd.Start();
 
         //cmd.StandardInput.WriteLine("python test.py w ________ b_b_b_b_ ___b____ __b_____ _w______ w_b___w_ _w_____b w_____w_ hastaAqui");
-        cmd.StandardInput.WriteLine("python test.py " + myBoard +" hastaAqui");
+        cmd.StandardInput.WriteLine("python alphaBeta.py " + myBoard +" hastaAqui");
         cmd.StandardInput.Flush();
         cmd.StandardInput.Close();
         cmd.WaitForExit();
