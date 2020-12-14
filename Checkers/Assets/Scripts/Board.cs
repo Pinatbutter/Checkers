@@ -16,6 +16,12 @@ public class Board : MonoBehaviour
 
     public bool isWhite;
     private bool isWhiteTurn;
+    
+    private bool blackPeckerGrowing;
+    private int blackX;
+    private int blackY;
+    private Pieces blackP;
+
 
     private Pieces selectedPiece;
     private List<Pieces> forcedPieces;
@@ -53,6 +59,24 @@ public class Board : MonoBehaviour
 
             if (Input.GetMouseButtonUp(0))
                 TryMove((int)startDrag.x, (int)startDrag.y, x, y);
+        }
+        if (blackPeckerGrowing)
+        {
+            Vector3 newPos = (Vector3.right * blackX) + (Vector3.forward * blackY) + offSet + otherOffSet;
+
+            float speed = 4;
+            float step = speed * Time.deltaTime;
+            blackP.transform.position = Vector3.MoveTowards(blackP.transform.position, newPos, step);
+            if(blackP.transform.position == newPos)
+            {
+                blackPeckerGrowing = false;
+                if (!isWhiteTurn)
+                {
+                    List<(int, int)> hasAnotherMove = AIScript.MiniMax('b', TransformBoard());
+
+                    moveBlack(hasAnotherMove);
+                }
+            }
         }
     }
     private void UpdateMouseOver()
@@ -215,9 +239,7 @@ public class Board : MonoBehaviour
         isWhite = !isWhite;
         hasKilled = false;
         CheckVictory();
-        //TransformBoard();
 
-        // AI.CheckersBoard tempBoard = TransformBoard();
         if (!isWhiteTurn)
         {
             List<(int, int)> Solution = AIScript.MiniMax('b', TransformBoard());
@@ -286,7 +308,7 @@ public class Board : MonoBehaviour
     private void moveBlack(List<(int, int)> Solution)
     {
 
-        UnityEngine.Debug.Log("Moving Black");
+      //  UnityEngine.Debug.Log("Moving Black");
         int moveToX, moveToY, px, py;
 
         px = Solution[0].Item1;
@@ -297,14 +319,15 @@ public class Board : MonoBehaviour
         moveToX = Solution[1].Item1;
         moveToY = Solution[1].Item2;
         moveToY = Math.Abs(7 - moveToY);
-/*
-         foreach ((int xPos, int yPos) in Solution)
-        {
-            UnityEngine.Debug.Log(xPos + " " + (7- yPos));
-        }
-*/
+        /*
+                 foreach ((int xPos, int yPos) in Solution)
+                {
+                    UnityEngine.Debug.Log(xPos + " " + (7- yPos));
+                }
+        */
         TryMove(px, py, moveToX, moveToY);
 
+      
     }
 
 
@@ -324,6 +347,7 @@ public class Board : MonoBehaviour
         if (!hasBlack)
             Victory(true);
     }
+
 
     private void Victory(bool isWhite)
     {
@@ -406,9 +430,16 @@ public class Board : MonoBehaviour
 
     private void PlacePiece(Pieces p, int x, int y)
     {
-        p.transform.position = (Vector3.right * x) + (Vector3.forward * y) + offSet + otherOffSet;
+        if (isWhiteTurn)
+            p.transform.position = (Vector3.right * x) + (Vector3.forward * y) + offSet + otherOffSet;
+        else if(!blackPeckerGrowing)
+        {
+            blackP = p;
+            blackX = x;
+            blackY = y;
+            blackPeckerGrowing = true;
+        }
 
     }
-
 
 }

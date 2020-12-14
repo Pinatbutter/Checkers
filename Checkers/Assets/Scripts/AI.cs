@@ -73,7 +73,7 @@ public class AI : MonoBehaviour
 
                     // check if we are still inside the board
                     if (endR >= 0 && endR < 8)
-                    {   
+                    {
                         // move forwards if possible (still inside board)
                         if (c + 1 < 8)
                         {
@@ -97,7 +97,7 @@ public class AI : MonoBehaviour
 
                             // check if the opponent is in the position
                             else if (char.ToLower(dest) == rival)
-                            {   
+                            {
                                 // capture the opponent
                                 int rcapt = endR + rdir;
 
@@ -172,7 +172,7 @@ public class AI : MonoBehaviour
                                     m.startC = c;
                                     m.endR = rendR;
                                     m.endC = c + 1;
-                                    
+
                                     allMoves.Add(m);
                                 }
                                 // check if we can capture there
@@ -283,7 +283,7 @@ public class AI : MonoBehaviour
         // mark where we where empty
         b.board[m.startR][m.startC] = '_';
 
-        
+
         // if we captured we leave the place we jumped over empty
         if (capture)
         {
@@ -295,17 +295,29 @@ public class AI : MonoBehaviour
     }
 
     // Our evaluation Function
-    int staticEval(CheckersBoard b)
+    int heuristicEval(CheckersBoard b)
     {
-        int score = 0;
+        // Main Weights for  the 'heuristic'
+        int playerCrownWeight = 500;
+        int pieceWeight = 300;
+        int rivalCrownWeight = 500;
+        int rivalWeight = 300;
+
+        // Positional Bonuses for the heuristics
+        int excellentWeight = 40;
+        int veryGoodWeight = 30;
+        int goodWeight = 20;
+
+        // The score
+        int totalScore = 0;
+
+        // Player and rival information for blacks
         char player = 'b';
         char rival = 'w';
         int rdir = -1;
         int centerWeight = 0;
-        int playerCrownWeight = 500;
-        int os = 300;
-        int rivalCrownWeight = 500;
-        int ts = 300;
+
+        // Player and rirval information for white
         if (b.turn)
         {
             player = 'w';
@@ -314,8 +326,13 @@ public class AI : MonoBehaviour
             centerWeight = 7;
         }
 
+        // First we count all the pieces in the board
         int playerCount = 0;
         int rivalCount = 0;
+
+
+        // Nested for-loops that go through every piece
+        // They count how many pieces each player has
         for (int r = 0; r < 8; r++)
             for (int c = 0; c < 8; c++)
             {
@@ -325,88 +342,118 @@ public class AI : MonoBehaviour
                     rivalCount++;
             }
 
+
+        // Now, we found out that the AI  should play differently
+        // depending on the 'stage' that the game is at
+        // By default play 'normally'
         int setting = 0;
+
+        // If it has more pieces than the rival and the rival has less than 3
+        // Play aggressively
         if (playerCount > rivalCount && rivalCount < 3)
             setting = 1;
+
+        // If the rival has more pieces than us, and we have less than 3
+        // Better play safe
         else if (rivalCount > playerCount && playerCount < 3)
             setting = 2;
 
+        // Again, we go through every cell in the board
         for (int r = 0; r < 8; r++)
             for (int c = 0; c < 8; c++)
             {
-                bool front2 = ((r - rdir * 2) >= 0) && ((r - rdir * 2) < 8);
-                bool behind2 = ((r + rdir * 2) >= 0) && ((r + rdir * 2) < 8);
-                bool left2 = (c - 2 >= 0);
-                bool right2 = (c + 2 < 8);
+                // positioning bools
+                // They tell if the current cell is at the position
 
+                // atFront tells if its at the top 2 rows
+                bool atFront = ((r - rdir * 2) >= 0) && ((r - rdir * 2) < 8);
+                // atBack tells if its at the back 2 rows
+                bool atBack = ((r + rdir * 2) >= 0) && ((r + rdir * 2) < 8);
+                // atLeft tells if its at the leftmost 2 columns
+                bool atLeft = (c - 2 >= 0);
+                // atRight tells if its at the rightmost 2 columns
+                bool atRight = (c + 2 < 8);
+
+
+                // If the player has a queen 
                 if (b.board[r][c] == char.ToUpper(player))
                 {
-                    score += playerCrownWeight;
+                    totalScore += playerCrownWeight;
                 }
+
+                // If the rival has a queen
                 else if (b.board[r][c] == char.ToUpper(rival))
                 {
-                    score -= rivalCrownWeight;
+                    totalScore -= rivalCrownWeight;
+
+                    // If we are playing aggresively and the rival has a queen
                     if (setting == 1)
                     {
-                        if (front2)
+                        if (atFront)
                         {
-                            if (left2 && char.ToLower(b.board[r - rdir * 2][c - 2]) == player)
-                                score += 40;
-                            if (right2 && char.ToLower(b.board[r - rdir * 2][c + 2]) == player)
-                                score += 40;
+                            if (atLeft && char.ToLower(b.board[r - rdir * 2][c - 2]) == player)
+                                totalScore += excellentWeight;
+                            if (atRight && char.ToLower(b.board[r - rdir * 2][c + 2]) == player)
+                                totalScore += excellentWeight;
                             if (char.ToLower(b.board[r - rdir * 2][c]) == player)
-                                score += 40;
+                                totalScore += excellentWeight;
                         }
-                        if (behind2)
+                        if (atBack)
                         {
-                            if (left2 && b.board[r + rdir * 2][c - 2] == char.ToUpper(player))
-                                score += 30;
-                            if (right2 && b.board[r + rdir * 2][c + 2] == char.ToUpper(player))
-                                score += 30;
+                            if (atLeft && b.board[r + rdir * 2][c - 2] == char.ToUpper(player))
+                                totalScore += veryGoodWeight;
+                            if (atRight && b.board[r + rdir * 2][c + 2] == char.ToUpper(player))
+                                totalScore += veryGoodWeight;
                             if (b.board[r + rdir * 2][c] == char.ToUpper(player))
-                                score += 30;
+                                totalScore += veryGoodWeight;
                         }
-                        if (left2 && b.board[r][c - 2] == char.ToUpper(player))
-                            score += 30;
-                        if (right2 && b.board[r][c + 2] == char.ToUpper(player))
-                            score += 30;
+                        if (atLeft && b.board[r][c - 2] == char.ToUpper(player))
+                            totalScore += veryGoodWeight;
+                        if (atRight && b.board[r][c + 2] == char.ToUpper(player))
+                            totalScore += veryGoodWeight;
                     }
                 }
+
+                // If we have a normal piece there
                 else if (b.board[r][c] == player)
                 {
-                    if (!b.turn && c == 0)
-                        score++;
-                    score += os - (centerWeight - r) * (centerWeight - r);
+                    totalScore += pieceWeight - (centerWeight - r) * (centerWeight - r);
                 }
+
+                // If the rival has a piece there
                 else if (b.board[r][c] == rival)
                 {
-                    score -= ts + (7 - centerWeight - r) * (7 - centerWeight - r);
+                    totalScore -= rivalWeight + (7 - centerWeight - r) * (7 - centerWeight - r);
+
+                    // If the rival has a piece there and we are aggresive
                     if (setting == 1)
                     {
-                        if (front2)
+                        if (atFront)
                         {
-                            if (left2 && char.ToLower(b.board[r - rdir * 2][c - 2]) == player)
-                                score += 40;
-                            if (right2 && char.ToLower(b.board[r - rdir * 2][c + 2]) == player)
-                                score += 40;
+                            if (atLeft && char.ToLower(b.board[r - rdir * 2][c - 2]) == player)
+                                totalScore += excellentWeight;
+                            if (atRight && char.ToLower(b.board[r - rdir * 2][c + 2]) == player)
+                                totalScore += excellentWeight;
                             if (char.ToLower(b.board[r - rdir * 2][c]) == player)
-                                score += 40;
+                                totalScore += excellentWeight;
                         }
-                        if (behind2)
+                        if (atBack)
                         {
-                            if (left2 && b.board[r + rdir * 2][c - 2] == char.ToUpper(player))
-                                score += 30;
-                            if (right2 && b.board[r + rdir * 2][c + 2] == char.ToUpper(player))
-                                score += 30;
+                            if (atLeft && b.board[r + rdir * 2][c - 2] == char.ToUpper(player))
+                                totalScore += veryGoodWeight;
+                            if (atRight && b.board[r + rdir * 2][c + 2] == char.ToUpper(player))
+                                totalScore += veryGoodWeight;
                             if (b.board[r + rdir * 2][c] == char.ToUpper(player))
-                                score += 30;
+                                totalScore += veryGoodWeight;
                         }
-                        if (left2 && char.ToLower(b.board[r][c - 2]) == player)
-                            score += 30;
-                        if (right2 && char.ToLower(b.board[r][c + 2]) == player)
-                            score += 30;
+                        if (atLeft && char.ToLower(b.board[r][c - 2]) == player)
+                            totalScore += veryGoodWeight;
+                        if (atRight && char.ToLower(b.board[r][c + 2]) == player)
+                            totalScore += veryGoodWeight;
                     }
                 }
+
+                // if the piece is empty
                 else //'_'
                 {
                     if (r - 1 >= 0)
@@ -419,12 +466,12 @@ public class AI : MonoBehaviour
                             {
                                 if (player == char.ToLower(cc))
                                 {
-                                    score += 20;
+                                    totalScore += goodWeight;
                                 }
 
                                 if (rival == char.ToLower(cc))
                                 {
-                                    score -= 20;
+                                    totalScore -= goodWeight;
                                 }
 
                             }
@@ -438,12 +485,12 @@ public class AI : MonoBehaviour
                             {
                                 if (player == char.ToLower(cc))
                                 {
-                                    score += 20;
+                                    totalScore += goodWeight;
                                 }
 
                                 if (rival == char.ToLower(cc))
                                 {
-                                    score -= 20;
+                                    totalScore -= goodWeight;
                                 }
                             }
 
@@ -459,12 +506,12 @@ public class AI : MonoBehaviour
                             {
                                 if (player == char.ToLower(cc))
                                 {
-                                    score += 20;
+                                    totalScore += goodWeight;
                                 }
 
                                 if (rival == char.ToLower(cc))
                                 {
-                                    score -= 20;
+                                    totalScore -= goodWeight;
                                 }
                             }
 
@@ -477,12 +524,12 @@ public class AI : MonoBehaviour
                             {
                                 if (player == char.ToLower(cc))
                                 {
-                                    score += 20;
+                                    totalScore += goodWeight;
                                 }
 
                                 if (rival == char.ToLower(cc))
                                 {
-                                    score -= 20;
+                                    totalScore -= goodWeight;
                                 }
 
                             }
@@ -491,42 +538,53 @@ public class AI : MonoBehaviour
                 }
 
             }
-        return score;
+        return totalScore;
     }
 
 
     // Alpha beta function
     MoveScore alphabetaMax(CheckersBoard b, MoveScore alpha, MoveScore beta, int depth)
     {
-        // If our depth is at 0
+        // If our depth is at 0, time to call heuristics
         if (depth == 0)
         {
 
             // Generate the possible moves
             List<Move> moveList = generateMoves(b);
 
-            // Check if we can move and if that move was a jump
+            // Check if we could move and if that move was a jump
             if (moveList.Count > 0 && (moveList[0].endR - moveList[0].startR) == 2)
             {
                 // Note created new boards
                 // make a new board with the first move
                 CheckersBoard temp = makeMove(b, moveList[0]);
                 CheckersBoard newBoard = new CheckersBoard();
+
+                // copy the results of making the move into the enw Board
                 newBoard.board = new List<char[]>(temp.board);
                 newBoard.turn = temp.turn;
 
+                // Store the last position as an integer last
                 int last = moveList[0].endR * 10 + moveList[0].endC;
+
+                // Loop while we did a capture, for multijumps
                 bool capture = true;
                 while (capture)
                 {
-                    List<Move> moremvs = generateMoves(newBoard);
+                    List<Move> extraMoves = generateMoves(newBoard);
                     capture = false;
-                    if (moremvs.Count == 0 || Math.Abs(moremvs[0].endR - moremvs[0].startR) != 2)
+
+                    // We cannot make a multijump
+                    if (extraMoves.Count == 0 || Math.Abs(extraMoves[0].endR - extraMoves[0].startR) != 2)
                         break;
-                    foreach (Move mm in moremvs)
+
+                    // We can make a multijump
+                    foreach (Move mm in extraMoves)
                     {
+                        // Check if that jump can be made from our previous position
                         if (mm.startR * 10 + mm.startC == last)
                         {
+
                             newBoard = makeMove(newBoard, mm);
                             last = mm.endR * 10 + mm.endC;
                             capture = true;
@@ -534,13 +592,20 @@ public class AI : MonoBehaviour
                         }
                     }
                 }
+
+                // Pass the turn to the other player
                 newBoard.turn = !newBoard.turn;
-                return alphabetaMin(newBoard, alpha, beta, 0);
+
+                // Now call min
+                return alphabetaMin(newBoard, alpha, beta, depth);
             }
 
+            // Time to actually call the heuristic
             MoveScore ms;
             ms.m = alpha.m;
-            ms.score = staticEval(b);
+            ms.score = heuristicEval(b);
+            UnityEngine.Debug.Log("Si entro");
+            UnityEngine.Debug.Log("Max Heuristic = " + ms.score);
             return ms;
         }
 
@@ -564,7 +629,7 @@ public class AI : MonoBehaviour
                     {
                         temp = makeMove(temp, mm);
                         last = mm.endR * 10 + mm.endC;
-                        // Debug.Log("Max Double hop at " + (mm.endR*10 + mm.endC));
+
                         capture = true;
                         break;
                     }
@@ -586,19 +651,27 @@ public class AI : MonoBehaviour
 
     MoveScore alphabetaMin(CheckersBoard b, MoveScore alpha, MoveScore beta, int depth)
     {
-        // UnityEngine.Debug.Log("Depth is");
+        // UnityEngine.Debug.Log("Depth is", depth);
 
         if (depth == 0)
         {
             List<Move> mvs = generateMoves(b);
             if (mvs.Count > 0 && (mvs[0].endR - mvs[0].startR) == 2)
             {
+                // Note created new boards
+                // make a new board with the first move
                 CheckersBoard temp = makeMove(b, mvs[0]);
+                CheckersBoard newBoard = new CheckersBoard();
+
+                // copy the results of making the move into the enw Board
+                newBoard.board = new List<char[]>(temp.board);
+                newBoard.turn = temp.turn;
+
                 int last = mvs[0].endR * 10 + mvs[0].endC;
                 bool capture = true;
                 while (capture)
                 {
-                    List<Move> moremvs = generateMoves(temp);
+                    List<Move> moremvs = generateMoves(newBoard);
                     capture = false;
                     if (moremvs.Count == 0 || Math.Abs(moremvs[0].endR - moremvs[0].startR) != 2)
                         break;
@@ -606,20 +679,21 @@ public class AI : MonoBehaviour
                     {
                         if (mm.startR * 10 + mm.startC == last)
                         {
-                            temp = makeMove(temp, mm);
+                            newBoard = makeMove(newBoard, mm);
                             last = mm.endR * 10 + mm.endC;
                             capture = true;
                             break;
                         }
                     }
                 }
-                temp.turn = !temp.turn;
-                return alphabetaMax(temp, alpha, beta, 0);
+                newBoard.turn = !newBoard.turn;
+                return alphabetaMax(newBoard, alpha, beta, depth);
             }
 
             MoveScore ms;
             ms.m = alpha.m;
-            ms.score = -staticEval(b);
+            ms.score = -heuristicEval(b);
+            UnityEngine.Debug.Log("Min Heuristic = " + ms.score);
             return ms;
         }
 
@@ -642,7 +716,7 @@ public class AI : MonoBehaviour
                     {
                         temp = makeMove(temp, mm);
                         last = mm.endR * 10 + mm.endC;
-                        //Debug.Log("Min Double hop at " ++ (mm.endR*10 + mm.endC));
+
                         capture = true;
                         break;
                     }
@@ -663,34 +737,44 @@ public class AI : MonoBehaviour
         return beta;
     }
 
-    Move evaluate(CheckersBoard b, int depth)
+    Move alphabeta(CheckersBoard b, int depth)
     {
-        //char[] black1 = { '_', 'b', '_', 'b', '_', 'b', '_', 'b'};
 
-        if (!b.turn && b.board[0].SequenceEqual("_b_b_b_b") && b.board[1].SequenceEqual("b_b_b_b_") && b.board[2].SequenceEqual("_b_b_b_b")
-            && b.board[5].SequenceEqual("w_w_w_w_") && b.board[6].SequenceEqual("_w_w_w_w") && b.board[7].SequenceEqual("w_w_w_w_"))
+        if (!b.turn
+            && b.board[0].SequenceEqual("_b_b_b_b")
+            && b.board[1].SequenceEqual("b_b_b_b_")
+            && b.board[2].SequenceEqual("_b_b_b_b")
+            && b.board[5].SequenceEqual("w_w_w_w_")
+            && b.board[6].SequenceEqual("_w_w_w_w")
+            && b.board[7].SequenceEqual("w_w_w_w_"))
         {
             Move bopen;
-            bopen.startR = 2; bopen.startC = 1; bopen.endR = 3; bopen.endC = 0;
+            bopen.startR = 2;
+            bopen.startC = 1;
+            bopen.endR = 3;
+            bopen.endC = 0;
+
             return bopen;
         }
 
-        Move best;
+        Move best = new Move();
         List<Move> moveList = generateMoves(b);
         best = moveList[0];
 
-        int highScore = staticEval(b);
+        int highScore = heuristicEval(b);
+        UnityEngine.Debug.Log("HighScore " + highScore);
 
-        MoveScore neg;
-        neg.m = best;
-        neg.score = -99999999;
+        MoveScore toTheInfinity;
+        toTheInfinity.m = best;
+        toTheInfinity.score = -99999999;
         MoveScore pos;
         pos.m = best;
         pos.score = 99999999;
 
-        MoveScore ms = alphabetaMax(b, neg, pos, depth);
+        MoveScore ms = alphabetaMax(b, toTheInfinity, pos, depth);
         highScore = ms.score;
         best = ms.m;
+
         //UnityEngine.Debug.Log("High: " + highScore);
         return best;
     }
@@ -711,7 +795,7 @@ public class AI : MonoBehaviour
         int depth = 25;
 
         Move f = legalMoves[0];
-        f = evaluate(gameBoard, depth);
+        f = alphabeta(gameBoard, depth);
 
         // Add the selected move current position
         Solution.Add((f.startC, f.startR));

@@ -16,7 +16,7 @@ public class AIv2 : MonoBehaviour
     public static int MaxUtility = 2147483647; // just the maximun int 32 value
     public static bool isPlayerBlack = true; // by default the bot plays blacks
     public static int MaxAllowedTimeInSeconds = 5; // the seconds we let the AI run
-    public static int MaxDepth = 10; // how deep we want the AI to go
+    public static int MaxDepth = 2; // how deep we want the AI to go
 
 
     public class CheckersState
@@ -123,40 +123,40 @@ public class AIv2 : MonoBehaviour
                     if (x >= 0 && x < 8 && y >= 0 && y < 8)
                     {
 
-                        // Check if the place to move is emty
+                        // Check if the place to move is empty
                         if (board[x, y] == '_')
                         {
-
                         }
+                            // IMPORTANT that it is a deep copy
+                            // we had so many bugs and stress because we took C# copies for granted
+                            // just the = sign is a shallow copy, and our changes
+                            // changed the original board
+                            char[,] boardCopy = board.Clone() as char[,];
 
+                            // "move' the piece by setting the new position with the piece it had before
+                            // the old spot is marked empty with '_'
+                            boardCopy[x, y] = boardCopy[i, j];
+                            boardCopy[i, j] = '_';
 
-                        // IMPORTANT that it is a deep copy
-                        // we had so many bugs and stress because we took C# copies for granted
-                        // just the = sign is a shallow copy, and our changes
-                        // changed the original board
-                        char[,] boardCopy = board.Clone() as char[,];
+                            // if the piece is at the top or at the bottom
+                            // promote it!
+                            if ((x == 7 && black_move) || (x == 0 && !black_move))
+                            {
+                                boardCopy[x, y] = char.ToUpper(boardCopy[x, y]);
+                            }
 
-                        // "move' the piece by setting the new position with the piece it had before
-                        // the old spot is marked empty with '_'
-                        boardCopy[x, y] = boardCopy[i, j];
-                        boardCopy[i, j] = '_';
+                            // Store moves done
+                            var curMoves = new List<(int, int)>();
+                            curMoves.Add((i, j));
+                            curMoves.Add((x, y));
 
-                        // if the piece is at the top or at the bottom
-                        // promote it!
-                        if ((x == 7 && black_move) || (x == 0 && !black_move))
-                        {
-                            boardCopy[x, y] = char.ToUpper(boardCopy[x, y]);
-                        }
+                            //                  UnityEngine.Debug.Log(i + " " + j + "  " + xp + " " + yp);
 
-                        // Store moves done
-                        var curMoves = new List<(int, int)>();
-                        curMoves.Add((i, j));
-                        curMoves.Add((x, y));
+                            // With this board we create a new checkers state, we pass the turn
+                            // to the next player, and send the moves, we add it to our successors
+                            var newState = new CheckersState(boardCopy, !black_move, curMoves);
+                            successors.Add(newState);
 
-                        // With this board we create a new checkers state, we pass the turn
-                        // to the next player, and send the moves, we add it to our successors
-                        var newState = new CheckersState(boardCopy, !black_move, curMoves);
-                        successors.Add(newState);
 
                     }
                 }
@@ -183,7 +183,7 @@ public class AIv2 : MonoBehaviour
                     // Check if the place is not empty, and that the opponent is there
                     if (x >= 0 && x < 8 && y >= 0 && y < 8 && board[x, y] != '_' && char.ToLower(board[i, j]) != char.ToLower(board[x, y]))
                     {
-                       
+
                         int xp = x + stepX;
                         int yp = y + stepY;
 
@@ -203,11 +203,14 @@ public class AIv2 : MonoBehaviour
                             }
 
                             // Add the jump move
+                         //   moves.Add((i, j));
                             moves.Add((xp, yp));
+                            UnityEngine.Debug.Log(i + " " + j + "  " + xp + " " + yp);
                             // Generate more jumps (if multimoves don't work, we have an issue here)
                             generateJumps(board, xp, yp, moves, successors);
                             // we remove the last jump from ^
                             moves.RemoveAt(moves.Count - 1);
+
 
                             // Update boards again
                             board[i, j] = previous;
@@ -216,7 +219,6 @@ public class AIv2 : MonoBehaviour
 
                             // set jump to false
                             JumpEnd = false;
-
 
                         }
 
@@ -404,6 +406,7 @@ public class AIv2 : MonoBehaviour
 
         // iterative deepening
         List<(int, int)> bestMove = new List<(int, int)>();
+
         for (int depth = 1; depth <= MaxDepth; depth++)
         {
             int val = -MaxUtility;
@@ -427,18 +430,6 @@ public class AIv2 : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Main();
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-    static void Main()
-    {
         char[,] testBoard = {
             {'_','_','_','_','_','_','_','_'},
             {'b','_','b','_','b','_','b','_'},
@@ -458,13 +449,16 @@ public class AIv2 : MonoBehaviour
 
         moves = iterativeDeepeningAlphaBeta(state);
 
-        Console.WriteLine(moves.Count - 1);
-        foreach((int x, int y) in moves)
+        UnityEngine.Debug.Log(moves.Count - 1);
+
+
+
+        foreach ((int x, int y) in moves)
         {
-            Console.WriteLine("pos = " + x + ' ' +  y);
+            UnityEngine.Debug.Log("pos = " + x + ' ' + y);
         }
 
-
     }
+
 
 }
