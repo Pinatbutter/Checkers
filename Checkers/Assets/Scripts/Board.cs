@@ -32,7 +32,8 @@ public class Board : MonoBehaviour
     private Vector2 endDrag;
     public GameObject MinMax;
     private Aiv4 AIScript;
-
+    public GameObject winnerObject;
+    private Winner winnerScript;
 
     private void Start()
     {
@@ -351,12 +352,15 @@ public class Board : MonoBehaviour
 
         if (whiteIndex == -1)
         {
-            UnityEngine.Debug.Log("Black Won");
+            
+            winnerScript = winnerObject.GetComponent<Winner>();
+            winnerScript.setWinner("Black");
         }
 
         if (blackIndex == -1)
         {
-            UnityEngine.Debug.Log("White Won");
+            winnerScript = winnerObject.GetComponent<Winner>();
+            winnerScript.setWinner("White");
         }
 
         
