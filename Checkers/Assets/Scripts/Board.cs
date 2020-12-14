@@ -327,11 +327,6 @@ public class Board : MonoBehaviour
             }
         }
 
-        foreach (int x in moves)
-        {
-            //UnityEngine.Debug.Log(x);
-        }
-
         int movesAmount = moves[0];
 
         int moveToX = moves[4];
