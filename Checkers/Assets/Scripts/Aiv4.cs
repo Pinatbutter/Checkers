@@ -5,25 +5,8 @@ using System.Diagnostics;
 
 public class Aiv4 : MonoBehaviour
 {
-    void runShell()
-    {
-        string strCmdText;
-        strCmdText = "python test.py";
-        System.Diagnostics.Process.Start("CMD.exe", strCmdText);
-    }
 
-    void runShell2()
-    {
-        System.Diagnostics.Process process = new System.Diagnostics.Process();
-        System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-        startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-        startInfo.FileName = "cmd.exe";
-        startInfo.Arguments = "python test.py";
-        process.StartInfo = startInfo;
-        process.Start();
-    }
-
-    void runShell3()
+    public string runShell(string myBoard)
     {
         Process cmd = new Process();
         cmd.StartInfo.FileName = "cmd.exe";
@@ -33,24 +16,23 @@ public class Aiv4 : MonoBehaviour
         cmd.StartInfo.UseShellExecute = false;
         cmd.Start();
 
-        cmd.StandardInput.WriteLine("python test.py w ________ b_b_b_b_ ___b____ __b_____ _w______ w_b___w_ _w_____b w_____w_ hastaAqui");
+        //cmd.StandardInput.WriteLine("python test.py w ________ b_b_b_b_ ___b____ __b_____ _w______ w_b___w_ _w_____b w_____w_ hastaAqui");
+        cmd.StandardInput.WriteLine("python test.py " + myBoard +" hastaAqui");
         cmd.StandardInput.Flush();
         cmd.StandardInput.Close();
         cmd.WaitForExit();
 
+        string signal = "hastaAqui";
         string info = cmd.StandardOutput.ReadToEnd();
-        UnityEngine.Debug.Log(info);
+
+        int index = info.IndexOf(signal);
+        index += 9;
+
+        string results = info.Substring(index);
+
+        //UnityEngine.Debug.Log(results);
+        return results;
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        runShell3();
-    }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }

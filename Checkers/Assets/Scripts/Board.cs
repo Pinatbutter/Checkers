@@ -16,12 +16,13 @@ public class Board : MonoBehaviour
 
     public bool isWhite;
     private bool isWhiteTurn;
-    
+
     private bool blackPeckerGrowing;
     private int blackX;
     private int blackY;
     private Pieces blackP;
 
+    public bool isGameOver = false;
 
     private Pieces selectedPiece;
     private List<Pieces> forcedPieces;
@@ -30,12 +31,12 @@ public class Board : MonoBehaviour
     private Vector2 startDrag;
     private Vector2 endDrag;
     public GameObject MinMax;
-    private AI AIScript;
+    private Aiv4 AIScript;
 
 
     private void Start()
     {
-        AIScript = MinMax.GetComponent<AI>();
+        AIScript = MinMax.GetComponent<Aiv4>();
         isWhiteTurn = true;
         forcedPieces = new List<Pieces>();
         GeneratePieces();
@@ -67,14 +68,14 @@ public class Board : MonoBehaviour
             float speed = 4;
             float step = speed * Time.deltaTime;
             blackP.transform.position = Vector3.MoveTowards(blackP.transform.position, newPos, step);
-            if(blackP.transform.position == newPos)
+            if (blackP.transform.position == newPos)
             {
                 blackPeckerGrowing = false;
                 if (!isWhiteTurn)
                 {
-                    List<(int, int)> hasAnotherMove = AIScript.MiniMax('b', TransformBoard());
-
-                    moveBlack(hasAnotherMove);
+                    string myAiBoard;
+                    string Solution = AIScript.runShell(TransformBoard());
+                    moveBlack(Solution);
                 }
             }
         }
@@ -238,22 +239,21 @@ public class Board : MonoBehaviour
         isWhiteTurn = !isWhiteTurn;
         isWhite = !isWhite;
         hasKilled = false;
-        CheckVictory();
-
-        if (!isWhiteTurn)
-        {
-            List<(int, int)> Solution = AIScript.MiniMax('b', TransformBoard());
-
-            moveBlack(Solution);
-        }
+        isGameOver = CheckVictory();
+        if (isGameOver == false)
+            if (!isWhiteTurn)
+            {
+                string myAiBoard = TransformBoard();
+                string Solution = AIScript.runShell(myAiBoard);
+                moveBlack(Solution);
+            }
     }
 
 
     // Transforms the Checkersboard from a notation that makes it
     // easy to interact with on unity to an 8x8 matrix
-    private AI.CheckersBoard TransformBoard()
+    private string TransformBoard()
     {
-        AI.CheckersBoard myBoard = new AI.CheckersBoard();
 
         List<char[]> tempList = new List<char[]>();
 
@@ -291,50 +291,66 @@ public class Board : MonoBehaviour
                 temp[j] = thePiece;
             }
 
-            //foreach( char c in temp)
-            //{
-            //     UnityEngine.Debug.Log(c);
-            //}
-
-
             tempList.Add(temp);
         }
 
-        myBoard.board = tempList;
+        string myAiBoard = "b ";
 
-        return myBoard;
+
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                myAiBoard += tempList[i][j];
+            }
+            myAiBoard += ' ';
+        }
+
+        return myAiBoard;
     }
 
-    private void moveBlack(List<(int, int)> Solution)
+    private void moveBlack(string Solution)
     {
+        //UnityEngine.Debug.Log("Move inside black=" + Solution);
 
-      //  UnityEngine.Debug.Log("Moving Black");
-        int moveToX, moveToY, px, py;
+        List<int> moves = new List<int>();
 
-        px = Solution[0].Item1;
-        py = Solution[0].Item2;
+        int mySize = Solution.Length;
 
-        py = Math.Abs(7 - py);
+        //  UnityEngine.Debug.Log("Solution length=" + Solution.Length);
 
-        moveToX = Solution[1].Item1;
-        moveToY = Solution[1].Item2;
-        moveToY = Math.Abs(7 - moveToY);
-        /*
-                 foreach ((int xPos, int yPos) in Solution)
-                {
-                    UnityEngine.Debug.Log(xPos + " " + (7- yPos));
-                }
-        */
+        for (int i = 0; i < mySize; i++)
+        {
+            if (Char.IsDigit(Solution[i]))
+            {
+                moves.Add((int)Char.GetNumericValue(Solution[i]));
+            }
+        }
+
+        foreach (int x in moves)
+        {
+            //UnityEngine.Debug.Log(x);
+        }
+
+        int movesAmount = moves[0];
+
+        int moveToX = moves[4];
+        int moveToY = 7 - moves[3];
+        int px = moves[2];
+        int py = 7 - moves[1];
+
+
         TryMove(px, py, moveToX, moveToY);
 
-      
+
     }
 
 
-    private void CheckVictory()
+    private bool CheckVictory()
     {
         var ps = FindObjectsOfType<Pieces>();
-        bool hasWhite = false, hasBlack = false;
+        bool hasWhite = false;
+        bool hasBlack = false;
         for (int i = 0; i < ps.Length; i++)
         {
             if (ps[i].isWhite)
@@ -343,9 +359,18 @@ public class Board : MonoBehaviour
                 hasBlack = true;
         }
         if (!hasWhite)
+        {
+            UnityEngine.Debug.Log(ps.Length);
             Victory(false);
+            return true;
+        }
         if (!hasBlack)
+        {
+            UnityEngine.Debug.Log("Black Won");
             Victory(true);
+            return true;
+        }
+        return false;
     }
 
 
@@ -432,7 +457,7 @@ public class Board : MonoBehaviour
     {
         if (isWhiteTurn)
             p.transform.position = (Vector3.right * x) + (Vector3.forward * y) + offSet + otherOffSet;
-        else if(!blackPeckerGrowing)
+        else if (!blackPeckerGrowing)
         {
             blackP = p;
             blackX = x;
